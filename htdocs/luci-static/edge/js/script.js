@@ -87,9 +87,17 @@ document.addEventListener('luci-loaded', function(ev) {
 	/**
 	 * menu click
 	 */
+	/**
+	 * menu click
+	 */
 	$(".main > .main-left > .nav > .slide > .menu").click(function () {
 		var ul = $(this).next(".slide-menu");
 		var menu = $(this);
+		$(".main > .main-left > .nav > .slide > .menu").each(function () {
+			var ulNode = $(this);
+			ulNode.removeClass("active");
+			ulNode.next(".slide-menu").stop(true).slideUp("fast")
+		});
 		if (!ul.is(":visible")) {
 			menu.addClass("active");
 			ul.addClass("active");
@@ -218,31 +226,68 @@ document.addEventListener('luci-loaded', function(ev) {
 				break;
 		}
 	}
+	
+   var getaudio = $('#player')[0];
+   /* Get the audio from the player (using the player's ID), the [0] is necessary */
+   var audiostatus = 'off';
+   /* Global variable for the audio's status (off or on). It's a bit crude but it works for determining the status. */
+
+
+   $(document).on('click touchend', '.speaker', function() {
+     /* Touchend is necessary for mobile devices, click alone won't work */
+     if (!$('.speaker').hasClass("speakerplay")) {
+       if (audiostatus == 'off') {
+         $('.speaker').addClass('speakerplay');
+         getaudio.load();
+         getaudio.play();
+         audiostatus = 'on';
+         return false;
+       } else if (audiostatus == 'on') {
+         $('.speaker').addClass('speakerplay');
+         getaudio.play()
+       }
+     } else if ($('.speaker').hasClass("speakerplay")) {
+       getaudio.pause();
+       $('.speaker').removeClass('speakerplay');
+       audiostatus = 'on';
+     }
+   });
+
+   $('#player').on('ended', function() {
+     $('.speaker').removeClass('speakerplay');
+     /*When the audio has finished playing, remove the class speakerplay*/
+     audiostatus = 'off';
+     /*Set the status back to off*/
+   });
 	setTimeout(function(){
 var config = {
     // How long Waves effect duration 
     // when it's clicked (in milliseconds)
     duration: 600
 };
-    Waves.attach(".cbi-button,.btn,button,input[type='button'],input[type='reset'],input[type='submit']", ['waves-light']);
+    Waves.attach("button,input[type='button'],input[type='reset'],input[type='submit']", ['waves-light']);
 	// Ripple on hover
-$(".cbi-button,.btn,button,input[type='button'],input[type='reset'],input[type='submit']").mouseenter(function() {
+$("button,input[type='button'],input[type='reset'],input[type='submit']").mouseenter(function() {
     Waves.ripple(this, {wait: null});
 }).mouseleave(function() {
     Waves.calm(this);
 });
   Waves.init(config);
 $(".waves-input-wrapper").filter(function () {
-  return ($(this).children().is(":hidden"))
+  if($(this).children().css("display")=="none"){
+        return true;
+    }else{
+        return false;
+    }
 }).hide();
 
-$("select,input[type='text'],input[type='email'],input[type='url'],input[type='date'],input[type='datetime'],input[type='tel'],input[type='number'],input[type='search']").filter(function () {
-return (!$(this).parents(".cbi-dynlist").length)
+$("div>select:first-child,div>input[type='text']:first-child").filter(function () {
+return (!$(this).parents(".cbi-dynlist").length&&!$("body.Diagnostics").length&&!$(this).hasClass("cbi-input-password"))
 }).after("<span class='focus-input'></span>");
 
 $("input[type='checkbox']").filter(function () {
   return (!$(this).next("label").length)
-}).css({"position":"relative","opacity":"1","pointer-events":"auto"});
+}).show();
 
 $("select,input").filter(function () {
   return ($(this).next(".focus-input").length)
@@ -251,12 +296,12 @@ $("select,input").filter(function () {
 }).blur(function(){
   $(this).css("border-bottom","1px solid #9e9e9e");
 });
-	}, 400);
+	}, 0);
 
 var options = { attributes: true};
 function callback() {
-$("select,input[type='text'],input[type='email'],input[type='url'],input[type='date'],input[type='datetime'],input[type='tel'],input[type='number'],input[type='search']").filter(function () {
-return (!$(this).parents(".cbi-dynlist").length)
+$("div>select:first-child,div>input[type='text']:first-child").filter(function () {
+return (!$(this).parents(".cbi-dynlist").length&&!$(this).hasClass("cbi-input-password"))
 }).after("<span class='focus-input'></span>");
 $("select,input").filter(function () {
   return ($(this).next(".focus-input").length)
@@ -267,9 +312,13 @@ $("select,input").filter(function () {
 });
 $("input[type='checkbox']").filter(function () {
   return (!$(this).next("label").length)
-}).css({"position":"relative","opacity":"1","pointer-events":"auto"});
+}).show();
 }
 var mutationObserver = new MutationObserver(callback);
  mutationObserver.observe($("body")[0], options);
+ $(".cbi-value").has("textarea").css("background","none");
+if(document.body.scrollHeight > window.innerHeight){
+	$(".cbi-page-actions.control-group").addClass("fixed")
+}
 })(jQuery);
 });
